@@ -1,7 +1,10 @@
 kssh
 ====
 
-[Kaginawa](https://github.com/kaginawa/kaginawa) powered SSH client.
+[![Actions Status](https://github.com/kaginawa/kssh/workflows/Go/badge.svg)](https://github.com/kaginawa/kssh/actions)
+[![Go Report Card](https://goreportcard.com/badge/github.com/kaginawa/kssh)](https://goreportcard.com/report/github.com/kaginawa/kssh)
+s://github.com/kagin
+[Kaginawa](httpawa/kaginawa) powered SSH client.
 
 ## Usage
 
