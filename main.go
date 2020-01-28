@@ -13,7 +13,6 @@ var (
 	configFile = flag.String("c", defaultConfigFileName, "path to configuration file")
 	apiKey     = flag.String("k", "", "admin API key for the Kaginawa Server")
 	server     = flag.String("s", "", "hostname of the Kaginawa Server")
-	verbose    = flag.Bool("v", false, "verbose log output")
 )
 
 func main() {
@@ -92,7 +91,7 @@ func main() {
 	if tunnel == nil {
 		fatalf("unknown ssh server: %s", report.SSHServerHost)
 	}
-	connect(tunnel, username, report.SSHServerHost, report.SSHRemotePort)
+	connect(tunnel, username, report.SSHRemotePort)
 }
 
 func inputConfig(path string) config {

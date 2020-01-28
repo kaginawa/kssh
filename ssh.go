@@ -3,14 +3,15 @@ package main
 import (
 	"fmt"
 	"os"
+	"strings"
 	"syscall"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-func connect(tunnel *sshServer, user, host string, port int) {
-	fmt.Print("Password: ")
+func connect(tunnel *sshServer, user string, port int) {
+	fmt.Printf("Password for %s: ", user)
 	password, err := terminal.ReadPassword(syscall.Stdin)
 	if err != nil {
 		fatalf("failed to read password: %v", err)
@@ -37,19 +38,25 @@ func connect(tunnel *sshServer, user, host string, port int) {
 		fatalf("failed to connect: %v", err)
 	}
 	defer safeClose(conn, "ssh tunneling connection")
-	fmt.Println("target connected.")
 	c, nc, req, err := ssh.NewClientConn(conn, fmt.Sprintf("localhost:%d", port), sshConfig)
 	if err != nil {
 		fatalf("failed to create session: %v", err)
 	}
 	client := ssh.NewClient(c, nc, req)
 	defer safeClose(client, "ssh target connection")
-	fmt.Println("session opened.")
 
 	// Open session
-	session, err := client.NewSession()
-	if err != nil {
-		fatalf("failed to open session: %v", err)
+	var session *ssh.Session
+	for {
+		var err error
+		session, err = client.NewSession()
+		if err != nil {
+			if strings.HasSuffix(err.Error(), "EOF") {
+				continue
+			}
+			fatalf("failed to open session: %v", err)
+		}
+		break
 	}
 
 	// Prepare terminal

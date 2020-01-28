@@ -7,8 +7,8 @@ import (
 )
 
 func fatalf(format string, a ...interface{}) {
-	if _, err := fmt.Fprintf(os.Stderr, format+"\n", a); err != nil {
-		fmt.Printf("DEBUG: "+format+"\n", a)
+	if _, err := fmt.Fprintf(os.Stderr, format+"\n", a...); err != nil {
+		fmt.Printf("DEBUG: "+format+"\n", a...)
 	}
 	os.Exit(1)
 }
