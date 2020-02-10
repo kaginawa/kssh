@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"net"
 	"os"
 	"strings"
 	"syscall"
@@ -19,37 +18,50 @@ func connect(tunnel *sshServer, user string, port int) {
 	}
 	fmt.Println()
 
-	// Connect to SSH tunneling server
 	tunnelConfig, err := createSSHConfig(tunnel.User, tunnel.Key, tunnel.Password)
 	if err != nil {
 		fatalf("failed to create SSH config: %v", err)
 	}
-	tConn, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", tunnel.Host, tunnel.Port), tunnelConfig)
-	if err != nil {
-		fatalf("failed to connect SSH tunneling server: %v", err)
-	}
-
-	// Connect to target
 	sshConfig, err := createSSHConfig(user, "", string(password))
 	if err != nil {
 		fatalf("failed to create SSH config: %v", err)
 	}
-	conn, err := tConn.Dial("tcp", fmt.Sprintf("localhost:%d", port))
-	if err != nil {
-		fatalf("failed to connect: %v", err)
-	}
-	defer safeClose(conn, "ssh tunneling connection")
-	c, nc, req, err := openTunnel(conn, port, sshConfig)
-	if err != nil {
-		fatalf("failed to create tunneling connection: %v", err)
-	}
-	client := ssh.NewClient(c, nc, req)
-	defer safeClose(client, "ssh target connection")
 
-	// Open session
-	session, err := openSession(client)
-	if err != nil {
-		fatalf("failed to create client session: %v", err)
+	var session *ssh.Session
+	for {
+		// Connect to SSH tunneling server
+		tConn, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", tunnel.Host, tunnel.Port), tunnelConfig)
+		if err != nil {
+			fatalf("failed to connect SSH tunneling server: %v", err)
+		}
+
+		// Connect to target
+		conn, err := tConn.Dial("tcp", fmt.Sprintf("localhost:%d", port))
+		if err != nil {
+			fatalf("failed to connect: %v", err)
+		}
+		c, nc, req, err := ssh.NewClientConn(conn, fmt.Sprintf("localhost:%d", port), sshConfig)
+		if err != nil {
+			if strings.HasSuffix(err.Error(), "EOF") {
+				safeClose(conn, "tcp connection")
+				safeClose(tConn, "tunnel connection")
+				continue // retry
+			}
+			fatalf("failed to create tunneling connection: %v", err)
+		}
+		client := ssh.NewClient(c, nc, req)
+
+		// Open session
+		session, err = client.NewSession()
+		if err != nil {
+			if strings.HasSuffix(err.Error(), "EOF") {
+				safeClose(client, "ssh client")
+				safeClose(tConn, "tunnel connection")
+				continue // retry
+			}
+			fatalf("failed to create client session: %v", err)
+		}
+		break
 	}
 
 	// Prepare terminal
@@ -103,38 +115,4 @@ func createSSHConfig(user, key, password string) (*ssh.ClientConfig, error) {
 		config.Auth = append(config.Auth, ssh.Password(password))
 	}
 	return &config, nil
-}
-
-func openTunnel(conn net.Conn, port int, config *ssh.ClientConfig) (ssh.Conn, <-chan ssh.NewChannel, <-chan *ssh.Request, error) {
-	var c ssh.Conn
-	var nc <-chan ssh.NewChannel
-	var req <-chan *ssh.Request
-	for {
-		var err error
-		c, nc, req, err = ssh.NewClientConn(conn, fmt.Sprintf("localhost:%d", port), config)
-		if err != nil {
-			if strings.HasSuffix(err.Error(), "EOF") {
-				continue
-			}
-			return nil, nil, nil, err
-		}
-		break
-	}
-	return c, nc, req, nil
-}
-
-func openSession(client *ssh.Client) (*ssh.Session, error) {
-	var session *ssh.Session
-	for {
-		var err error
-		session, err = client.NewSession()
-		if err != nil {
-			if strings.HasSuffix(err.Error(), "EOF") {
-				continue
-			}
-			return nil, err
-		}
-		break
-	}
-	return session, nil
 }
