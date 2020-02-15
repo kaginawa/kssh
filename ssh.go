@@ -63,8 +63,29 @@ func connect(tunnel *sshServer, user string, port int) {
 		}
 		break
 	}
+	openTerminal(err, session)
+}
 
-	// Prepare terminal
+func createSSHConfig(user, key, password string) (*ssh.ClientConfig, error) {
+	config := ssh.ClientConfig{
+		User:            user,
+		Auth:            make([]ssh.AuthMethod, 0),
+		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
+	}
+	if len(key) > 0 {
+		parsed, err := ssh.ParsePrivateKey([]byte(key))
+		if err != nil {
+			return nil, err
+		}
+		config.Auth = append(config.Auth, ssh.PublicKeys(parsed))
+	}
+	if len(password) > 0 {
+		config.Auth = append(config.Auth, ssh.Password(password))
+	}
+	return &config, nil
+}
+
+func openTerminal(err error, session *ssh.Session) {
 	fd := int(os.Stdin.Fd())
 	state, err := terminal.MakeRaw(fd)
 	if err != nil {
@@ -96,23 +117,4 @@ func connect(tunnel *sshServer, user string, port int) {
 	if err := session.Wait(); err != nil {
 		fatalf("session brake: %v", err)
 	}
-}
-
-func createSSHConfig(user, key, password string) (*ssh.ClientConfig, error) {
-	config := ssh.ClientConfig{
-		User:            user,
-		Auth:            make([]ssh.AuthMethod, 0),
-		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-	}
-	if len(key) > 0 {
-		parsed, err := ssh.ParsePrivateKey([]byte(key))
-		if err != nil {
-			return nil, err
-		}
-		config.Auth = append(config.Auth, ssh.PublicKeys(parsed))
-	}
-	if len(password) > 0 {
-		config.Auth = append(config.Auth, ssh.Password(password))
-	}
-	return &config, nil
 }

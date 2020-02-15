@@ -57,41 +57,7 @@ func main() {
 	} else {
 		config = inputConfig(*configFile)
 	}
-
-	var report report
-	// Resolve by MAC
-	client := newClient(config.server, config.apiKey)
-	if strings.Count(target, ":") == 5 {
-		r, err := client.findByID(target)
-		if err != nil {
-			fatalf("%v", err)
-		}
-		if r == nil {
-			fatalf("target not found: %s", target)
-		}
-		report = *r
-	} else {
-		// Resolve by custom ID
-		reports, err := client.findByCustomID(target)
-		if err != nil {
-			fatalf("%v", err)
-		}
-		if len(reports) == 0 {
-			fatalf("target not found: %s", target)
-		}
-		report = selectTarget(reports)
-	}
-	if report.SSHRemotePort == 0 {
-		fatalf("ssh not connected.")
-	}
-	tunnel, err := client.sshServer(report.SSHServerHost)
-	if err != nil {
-		fatalf("failed to get ssh server information: %v", err)
-	}
-	if tunnel == nil {
-		fatalf("unknown ssh server: %s", report.SSHServerHost)
-	}
-	connect(tunnel, username, report.SSHRemotePort)
+	start(config, target, username)
 }
 
 func inputConfig(path string) config {
@@ -146,4 +112,39 @@ func selectTarget(reports []report) report {
 		}
 		return reports[n]
 	}
+}
+
+func start(config config, target string, username string) {
+	var report report
+	client := newClient(config.server, config.apiKey)
+	if strings.Count(target, ":") == 5 {
+		r, err := client.findByID(target)
+		if err != nil {
+			fatalf("%v", err)
+		}
+		if r == nil {
+			fatalf("target not found: %s", target)
+		}
+		report = *r
+	} else {
+		reports, err := client.findByCustomID(target)
+		if err != nil {
+			fatalf("%v", err)
+		}
+		if len(reports) == 0 {
+			fatalf("target not found: %s", target)
+		}
+		report = selectTarget(reports)
+	}
+	if report.SSHRemotePort == 0 {
+		fatalf("ssh not connected.")
+	}
+	tunnel, err := client.sshServer(report.SSHServerHost)
+	if err != nil {
+		fatalf("failed to get ssh server information: %v", err)
+	}
+	if tunnel == nil {
+		fatalf("unknown ssh server: %s", report.SSHServerHost)
+	}
+	connect(tunnel, username, report.SSHRemotePort)
 }

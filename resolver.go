@@ -3,6 +3,8 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"net/http"
 	"strings"
 )
@@ -41,9 +43,8 @@ func newClient(server, apiKey string) *client {
 	return &c
 }
 
-func (c *client) findByID(mac string) (*report, error) {
-	url := c.server + "/nodes/" + mac
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+func (c *client) retrieve(url, method string, body io.Reader) ([]byte, error) {
+	req, err := http.NewRequest(method, url, body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to prepare request: %w", err)
 	}
@@ -60,60 +61,44 @@ func (c *client) findByID(mac string) (*report, error) {
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("server respond HTTP %s", resp.Status)
 	}
+	raw, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read body: %w", err)
+	}
+	return raw, nil
+}
+
+func (c *client) findByID(mac string) (*report, error) {
+	body, err := c.retrieve(c.server+"/nodes/"+mac, http.MethodGet, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to find %s: %w", mac, err)
+	}
 	var report report
-	if err := json.NewDecoder(resp.Body).Decode(&report); err != nil {
+	if err := json.Unmarshal(body, &report); err != nil {
 		return nil, fmt.Errorf("failed to parse response: %v", err)
 	}
 	return &report, nil
 }
 
 func (c *client) findByCustomID(cid string) ([]report, error) {
-	url := c.server + "/nodes?custom-id=" + cid
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	body, err := c.retrieve(c.server+"/nodes?custom-id="+cid, http.MethodGet, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to prepare request: %w", err)
-	}
-	req.Header.Set("Authorization", "token "+c.apiKey)
-	req.Header.Set("Accept", "application/json")
-	resp, err := new(http.Client).Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to communicate Kaginawa Server: %w", err)
-	}
-	defer safeClose(resp.Body, "connection")
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, nil
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("server respond HTTP %s", resp.Status)
+		return nil, fmt.Errorf("failed to find %s: %w", cid, err)
 	}
 	var reports []report
-	if err := json.NewDecoder(resp.Body).Decode(&reports); err != nil {
+	if err := json.Unmarshal(body, &reports); err != nil {
 		return nil, fmt.Errorf("failed to parse response: %v", err)
 	}
 	return reports, nil
 }
 
 func (c *client) sshServer(host string) (*sshServer, error) {
-	url := c.server + "/servers/" + host
-	req, err := http.NewRequest(http.MethodGet, url, nil)
+	body, err := c.retrieve(c.server+"/servers/"+host, http.MethodGet, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to prepare request: %w", err)
-	}
-	req.Header.Set("Authorization", "token "+c.apiKey)
-	req.Header.Set("Accept", "application/json")
-	resp, err := new(http.Client).Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to communicate Kaginawa Server: %w", err)
-	}
-	defer safeClose(resp.Body, "connection")
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, nil
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("server respond HTTP %s", resp.Status)
+		return nil, fmt.Errorf("failed to find %s: %w", host, err)
 	}
 	var server sshServer
-	if err := json.NewDecoder(resp.Body).Decode(&server); err != nil {
+	if err := json.Unmarshal(body, &server); err != nil {
 		return nil, fmt.Errorf("failed to parse response: %v", err)
 	}
 	return &server, nil
