@@ -46,7 +46,10 @@ kssh <USER>@<MAC>
 ## Configuration
 
 Default file name of the configuration file is `kssh.conf` and location is [platform-dependent](https://golang.org/pkg/os/#UserConfigDir).
-It generates automatically when first use.
+
+- Linux: `~/config/kssh.conf`
+- macOS: `~/Library/Application Support/kssh.conf`
+- Windows: `%AppData%\kssh.conf`
 
 Format:
 
@@ -61,6 +64,8 @@ Supported parameters:
 | --------------- | ------- | ----------- |
 | Server          |         | Host name or IP address of the kaginawa-server (e.g. 10.128.1.100) |
 | AdminKey        |         | API key issued at kaginawa-server |
+| DefaultUser     | $USER   | Default login user |
+| DefaultPassword |         | Default password for login user (WARNING: understand security risks) |
 
 ## Install
 

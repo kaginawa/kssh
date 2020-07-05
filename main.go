@@ -37,18 +37,6 @@ func main() {
 			*configFile = filepath.Join(defaultDir, *configFile)
 		}
 	}
-	username := ""
-	if strings.Count(target, "@") == 1 {
-		split := strings.Split(target, "@")
-		username = split[0]
-		target = split[1]
-	} else {
-		u, err := user.Current()
-		if err != nil {
-			panic(err)
-		}
-		username = u.Name
-	}
 	var config config
 
 	// Order of parameter sources
@@ -65,12 +53,29 @@ func main() {
 		}
 		config = c
 	} else {
-		config = inputConfig(*configFile)
+		config = configPrompt(*configFile)
 	}
-	start(config, target, username)
+
+	var username, defaultPassword string
+	if strings.Count(target, "@") == 1 {
+		split := strings.Split(target, "@")
+		username = split[0]
+		target = split[1]
+	} else if len(config.defaultUser) > 0 {
+		username = config.defaultUser
+		defaultPassword = config.defaultPassword
+	} else {
+		u, err := user.Current()
+		if err != nil {
+			panic(err)
+		}
+		username = u.Name
+	}
+
+	start(config, target, username, defaultPassword)
 }
 
-func inputConfig(path string) config {
+func configPrompt(path string) config {
 	fmt.Printf("Creating configuration file: %s\n", *configFile)
 	var c config
 	for {
@@ -124,7 +129,7 @@ func selectTarget(reports []kaginawa.Report) kaginawa.Report {
 	}
 }
 
-func start(config config, target string, username string) {
+func start(config config, target string, username, defaultPassword string) {
 	endpoint := config.server
 	if !strings.HasPrefix(endpoint, "http://") && !strings.HasPrefix(endpoint, "https://") {
 		endpoint = "https://" + endpoint
@@ -163,5 +168,5 @@ func start(config config, target string, username string) {
 	if tunnel == nil {
 		fatalf("unknown ssh server: %s", report.SSHServerHost)
 	}
-	connect(tunnel, username, report.SSHRemotePort)
+	connect(tunnel, username, defaultPassword, report.SSHRemotePort)
 }

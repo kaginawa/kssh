@@ -13,8 +13,10 @@ import (
 const defaultConfigFileName = "kssh.conf"
 
 type config struct {
-	server string
-	apiKey string
+	server          string
+	apiKey          string
+	defaultUser     string
+	defaultPassword string
 }
 
 func loadConfig(path string) (config, error) {
@@ -37,6 +39,14 @@ func loadConfig(path string) (config, error) {
 		}
 		if strings.HasPrefix(text, "Server ") {
 			c.server = strings.TrimSpace(strings.Replace(text, "Server ", "", 1))
+			continue
+		}
+		if strings.HasPrefix(text, "DefaultUser ") {
+			c.defaultUser = strings.TrimSpace(strings.Replace(text, "DefaultUser ", "", 1))
+			continue
+		}
+		if strings.HasPrefix(text, "DefaultPassword ") {
+			c.defaultPassword = strings.TrimSpace(strings.Replace(text, "DefaultPassword ", "", 1))
 			continue
 		}
 	}
