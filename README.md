@@ -62,7 +62,7 @@ Supported parameters:
 
 | Key             | Default | Description |
 | --------------- | ------- | ----------- |
-| Server          |         | Host name or IP address of the kaginawa-server (e.g. 10.128.1.100) |
+| Server          |         | Host name or IP address of the kaginawa-server (e.g. http://10.128.1.100) |
 | AdminKey        |         | API key issued at kaginawa-server |
 | DefaultUser     | $USER   | Default login user |
 | DefaultPassword |         | Default password for login user (WARNING: understand security risks) |
