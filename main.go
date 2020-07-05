@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -8,6 +9,8 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+
+	"github.com/kaginawa/kaginawa-sdk-go"
 )
 
 var (
@@ -98,7 +101,7 @@ func inputConfig(path string) config {
 	return c
 }
 
-func selectTarget(reports []report) report {
+func selectTarget(reports []kaginawa.Report) kaginawa.Report {
 	if len(reports) == 1 {
 		return reports[0]
 	}
@@ -122,10 +125,17 @@ func selectTarget(reports []report) report {
 }
 
 func start(config config, target string, username string) {
-	var report report
-	client := newClient(config.server, config.apiKey)
+	endpoint := config.server
+	if !strings.HasPrefix(endpoint, "http://") && !strings.HasPrefix(endpoint, "https://") {
+		endpoint = "https://" + endpoint
+	}
+	var report kaginawa.Report
+	client, err := kaginawa.NewClient(endpoint, config.apiKey)
+	if err != nil {
+		fatalf("failed to prepare API client: %v", err)
+	}
 	if strings.Count(target, ":") == 5 {
-		r, err := client.findByID(target)
+		r, err := client.FindNode(context.Background(), target)
 		if err != nil {
 			fatalf("%v", err)
 		}
@@ -134,7 +144,7 @@ func start(config config, target string, username string) {
 		}
 		report = *r
 	} else {
-		reports, err := client.findByCustomID(target)
+		reports, err := client.ListNodesByCustomID(context.Background(), target)
 		if err != nil {
 			fatalf("%v", err)
 		}
@@ -146,7 +156,7 @@ func start(config config, target string, username string) {
 	if report.SSHRemotePort == 0 {
 		fatalf("ssh not connected.")
 	}
-	tunnel, err := client.sshServer(report.SSHServerHost)
+	tunnel, err := client.FindSSHServerByHostname(context.Background(), report.SSHServerHost)
 	if err != nil {
 		fatalf("failed to get ssh server information: %v", err)
 	}

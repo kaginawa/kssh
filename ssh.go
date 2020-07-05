@@ -6,29 +6,22 @@ import (
 	"strings"
 	"syscall"
 
+	"github.com/kaginawa/kaginawa-sdk-go"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-func connect(tunnel *sshServer, user string, port int) {
-	fmt.Printf("Password for %s: ", user)
-	password, err := terminal.ReadPassword(syscall.Stdin)
-	if err != nil {
-		fatalf("failed to read password: %v", err)
-	}
-	fmt.Println()
+const eofRetries = 3
 
+func connect(tunnel *kaginawa.SSHServer, user string, port int) {
 	tunnelConfig, err := createSSHConfig(tunnel.User, tunnel.Key, tunnel.Password)
 	if err != nil {
 		fatalf("failed to create SSH config: %v", err)
 	}
-	sshConfig, err := createSSHConfig(user, "", string(password))
-	if err != nil {
-		fatalf("failed to create SSH config: %v", err)
-	}
-
 	var session *ssh.Session
-	for {
+	eofCount := 0
+	password := ""
+	for i := 0; ; i++ {
 		// Connect to SSH tunneling server
 		tConn, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", tunnel.Host, tunnel.Port), tunnelConfig)
 		if err != nil {
@@ -40,12 +33,27 @@ func connect(tunnel *sshServer, user string, port int) {
 		if err != nil {
 			fatalf("failed to connect: %v", err)
 		}
+		if i == 0 {
+			password = passwordPrompt(user)
+		}
+		sshConfig, err := createSSHConfig(user, "", password)
+		if err != nil {
+			fatalf("failed to create SSH config: %v", err)
+		}
 		c, nc, req, err := ssh.NewClientConn(conn, fmt.Sprintf("localhost:%d", port), sshConfig)
 		if err != nil {
 			if strings.HasSuffix(err.Error(), "EOF") {
 				safeClose(conn, "tcp connection")
 				safeClose(tConn, "tunnel connection")
-				continue // retry
+				eofCount++
+				if eofCount >= eofRetries {
+					fatalf("EOF occurred %d times", eofCount)
+				}
+				continue
+			} else if strings.Contains(err.Error(), "unable to authenticate") {
+				fmt.Printf("%v\n", err.Error())
+				password = passwordPrompt(user)
+				continue
 			}
 			fatalf("failed to create tunneling connection: %v", err)
 		}
@@ -83,6 +91,16 @@ func createSSHConfig(user, key, password string) (*ssh.ClientConfig, error) {
 		config.Auth = append(config.Auth, ssh.Password(password))
 	}
 	return &config, nil
+}
+
+func passwordPrompt(user string) string {
+	fmt.Printf("Password for %s: ", user)
+	password, err := terminal.ReadPassword(syscall.Stdin)
+	if err != nil {
+		fatalf("failed to read password: %v", err)
+	}
+	fmt.Println()
+	return string(password)
 }
 
 func openTerminal(err error, session *ssh.Session) {
