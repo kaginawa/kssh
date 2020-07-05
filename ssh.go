@@ -13,14 +13,14 @@ import (
 
 const eofRetries = 3
 
-func connect(tunnel *kaginawa.SSHServer, user string, port int) {
+func connect(tunnel *kaginawa.SSHServer, user, defaultPassword string, port int) {
 	tunnelConfig, err := createSSHConfig(tunnel.User, tunnel.Key, tunnel.Password)
 	if err != nil {
 		fatalf("failed to create SSH config: %v", err)
 	}
 	var session *ssh.Session
-	var password string
-	var eofCount int
+	password := defaultPassword
+	eofCount := 0
 	for i := 0; ; i++ {
 		// Connect to SSH tunneling server
 		tConn, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", tunnel.Host, tunnel.Port), tunnelConfig)
@@ -33,7 +33,7 @@ func connect(tunnel *kaginawa.SSHServer, user string, port int) {
 		if err != nil {
 			fatalf("failed to connect: %v", err)
 		}
-		if i == 0 {
+		if i == 0 && len(defaultPassword) == 0 {
 			password = passwordPrompt(user)
 		}
 		sshConfig, err := createSSHConfig(user, "", password)
