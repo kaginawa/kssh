@@ -6,17 +6,24 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"runtime"
 	"strings"
 )
 
 var (
+	ver        = "v0.0.0"
 	configFile = flag.String("c", defaultConfigFileName, "path to configuration file")
 	apiKey     = flag.String("k", "", "admin API key for the Kaginawa Server")
 	server     = flag.String("s", "", "hostname of the Kaginawa Server")
+	v          = flag.Bool("v", false, "print version")
 )
 
 func main() {
 	flag.Parse()
+	if *v {
+		fmt.Printf("kssh %s, compiled by %s\n", ver, runtime.Version())
+		os.Exit(0)
+	}
 	if flag.NArg() != 1 {
 		flag.Usage()
 		os.Exit(2)
