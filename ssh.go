@@ -19,8 +19,8 @@ func connect(tunnel *kaginawa.SSHServer, user string, port int) {
 		fatalf("failed to create SSH config: %v", err)
 	}
 	var session *ssh.Session
-	eofCount := 0
-	password := ""
+	var password string
+	var eofCount int
 	for i := 0; ; i++ {
 		// Connect to SSH tunneling server
 		tConn, err := ssh.Dial("tcp", fmt.Sprintf("%s:%d", tunnel.Host, tunnel.Port), tunnelConfig)
