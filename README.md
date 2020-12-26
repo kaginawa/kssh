@@ -7,6 +7,10 @@ kssh
 
 [Kaginawa](https://github.com/kaginawa/kaginawa) powered SSH client.
 
+## Download
+
+See [Releases](https://github.com/kaginawa/kssh/releases) page.
+
 ## Usage
 
 Login target using custom ID with current user name:

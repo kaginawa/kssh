@@ -28,7 +28,7 @@ build: ## Build executable binaries for local execution
 .PHONY: build-all
 build-all: build ## Build executable binaries for all supported OSs and architectures
 	GOOS=windows GOARCH=amd64 go build -ldflags "-s -w -X main.ver=`git describe --tags`" -o build/kssh.exe .
-	GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X main.ver=`git describe --tags`" -o build/kssh.macos .
+	GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w -X main.ver=`git describe --tags`" -o build/kssh.macos-amd64 .
 	GOOS=linux GOARCH=amd64 go build -ldflags "-s -w -X main.ver=`git describe --tags`" -o build/kssh.linux-x64 .
 	GOOS=linux GOARCH=arm GOARM=6 go build -ldflags "-s -w -X main.ver=`git describe --tags`" -o build/kssh.linux-arm6 .
 	GOOS=linux GOARCH=arm GOARM=7 go build -ldflags "-s -w -X main.ver=`git describe --tags`" -o build/kssh.linux-arm7 .
