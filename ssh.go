@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-	"syscall"
 
 	"github.com/kaginawa/kaginawa-sdk-go"
 	"golang.org/x/crypto/ssh"
@@ -95,7 +94,7 @@ func createSSHConfig(user, key, password string) (*ssh.ClientConfig, error) {
 
 func passwordPrompt(user string) string {
 	fmt.Printf("Password for %s: ", user)
-	password, err := terminal.ReadPassword(syscall.Stdin)
+	password, err := terminal.ReadPassword(int(os.Stdin.Fd()))
 	if err != nil {
 		fatalf("failed to read password: %v", err)
 	}
