@@ -112,7 +112,11 @@ func selectTarget(reports []kaginawa.Report) kaginawa.Report {
 	}
 	fmt.Printf("Multiple choices:\n")
 	for i, r := range reports {
-		fmt.Printf("%d: %s %s %s\n", i+1, r.ID, r.LocalIPv4, r.Hostname)
+		if len(r.LocalIPv4) == 0 && len(r.LocalIPv6) > 0 {
+			fmt.Printf("%d: %s %s@%s %s\n", i+1, r.ID, r.LocalIPv6, r.Adapter, r.Hostname)
+		} else {
+			fmt.Printf("%d: %s %s@%s %s\n", i+1, r.ID, r.LocalIPv4, r.Adapter, r.Hostname)
+		}
 	}
 	var n int
 	for {
