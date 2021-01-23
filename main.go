@@ -18,6 +18,7 @@ var (
 	configFile = flag.String("c", defaultConfigFileName, "path to configuration file")
 	apiKey     = flag.String("k", "", "admin API key for the Kaginawa Server")
 	server     = flag.String("s", "", "hostname of the Kaginawa Server")
+	listener   = flag.Bool("l", false, "listen local port for TCP transfer")
 	v          = flag.Bool("v", false, "print version")
 )
 
@@ -172,5 +173,9 @@ func start(config config, target string, username, defaultPassword string) {
 	if tunnel == nil {
 		fatalf("unknown ssh server: %s", report.SSHServerHost)
 	}
-	connect(tunnel, username, defaultPassword, report.SSHRemotePort)
+	if *listener {
+		listen(tunnel, report.SSHRemotePort)
+	} else {
+		connect(tunnel, username, defaultPassword, report.SSHRemotePort)
+	}
 }
