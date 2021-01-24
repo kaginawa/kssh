@@ -5,7 +5,7 @@ kssh
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kaginawa_kssh&metric=alert_status)](https://sonarcloud.io/dashboard?id=kaginawa_kssh)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kaginawa/kssh)](https://goreportcard.com/report/github.com/kaginawa/kssh)
 
-[Kaginawa](https://github.com/kaginawa/kaginawa) powered SSH client.
+[Kaginawa](https://github.com/kaginawa/kaginawa)-powered SSH client.
 
 ## Download
 
@@ -13,28 +13,28 @@ See [Releases](https://github.com/kaginawa/kssh/releases) page.
 
 ## Usage
 
-Login target using custom ID with current user name:
+Login using custom ID as the current user:
 
 ```
 kssh <CUSTOM_ID>
 # Example: kssh debug1
 ```
 
-Login target using custom ID with specify user name:
+Login using custom ID as a different user:
 
 ```
 kssh <USER>@<CUSTOM_ID>
 # Example: alice@debug1
 ```
 
-Login target using MAC address with current user name:
+Login using MAC address as the current user:
 
 ```
 kssh <MAC>
 # Example: kssh f0:18:98:eb:c7:27
 ```
 
-Login target using MAC address with specify user name:
+Login using MAC address as a different user:
 
 ```
 kssh <USER>@<MAC>
@@ -46,6 +46,7 @@ kssh <USER>@<MAC>
 - `-k <API_KEY>` - specify admin API key
 - `-c <CONFIG>` - specify config file path
 - `-s <SERVER>` - specify [kaginawa server](https://github.com/kaginawa/kaginawa-server) address
+- `-l` - listen a local port for transferring non-SSH TCP connections trough the SSH tunnel
 
 ## Configuration
 
@@ -70,14 +71,6 @@ Supported parameters:
 | AdminKey        |         | API key issued at kaginawa-server |
 | DefaultUser     | $USER   | Default login user |
 | DefaultPassword |         | Default password for login user (WARNING: understand security risks) |
-
-## Install
-
-Via go get:
-
-```
-go get -u https://github.com/kaginawa/kssh
-```
 
 ## License
 
