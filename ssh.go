@@ -12,7 +12,7 @@ import (
 
 const eofRetries = 3
 
-func connect(tunnel *kaginawa.SSHServer, user, defaultPassword string, port int) {
+func connect(tunnel *kaginawa.SSHServer, user, defaultPassword string, port int) *ssh.Session {
 	tunnelConfig, err := createSSHConfig(tunnel.User, tunnel.Key, tunnel.Password)
 	if err != nil {
 		fatalf("failed to create SSH config: %v", err)
@@ -70,7 +70,7 @@ func connect(tunnel *kaginawa.SSHServer, user, defaultPassword string, port int)
 		}
 		break
 	}
-	openTerminal(err, session)
+	return session
 }
 
 func createSSHConfig(user, key, password string) (*ssh.ClientConfig, error) {
@@ -102,7 +102,7 @@ func passwordPrompt(user string) string {
 	return string(password)
 }
 
-func openTerminal(err error, session *ssh.Session) {
+func openTerminal(session *ssh.Session) {
 	fd := int(os.Stdin.Fd())
 	state, err := terminal.MakeRaw(fd)
 	if err != nil {
@@ -134,4 +134,9 @@ func openTerminal(err error, session *ssh.Session) {
 	if err := session.Wait(); err != nil {
 		fatalf("session brake: %v", err)
 	}
+}
+
+func execCommand(s *ssh.Session, cmd string) (string, error) {
+	result, err := s.Output(cmd)
+	return string(result), err
 }

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,7 +25,7 @@ func loadConfig(path string) (config, error) {
 			path = filepath.Join(defaultDir, path)
 		}
 	}
-	content, err := ioutil.ReadFile(path)
+	content, err := os.ReadFile(path)
 	if err != nil {
 		return c, fmt.Errorf("failed to load %s: %w", path, err)
 	}
