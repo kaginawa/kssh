@@ -41,11 +41,20 @@ kssh <USER>@<MAC>
 # Example: kssh alice@f0:18:98:eb:c7:27
 ```
 
+Login, run and exit:
+
+```
+kssh [<USER>@]<CUSTOM_ID|MAC> <COMMAND>
+# Example: kssh debug1 uname -a
+# Do not specify interactive commands (e.g. vi)
+```
+
 ## Options
 
 - `-k <API_KEY>` - specify admin API key
 - `-c <CONFIG>` - specify config file path
 - `-s <SERVER>` - specify [kaginawa server](https://github.com/kaginawa/kaginawa-server) address
+- `-f <PROCESURE_FILE>` - specify procedure (line-separated list of commands) file
 - `-l` - listen a local port for transferring non-SSH TCP connections trough the SSH tunnel
 
 ## Configuration

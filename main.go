@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"flag"
 	"fmt"
@@ -18,8 +20,10 @@ var (
 	configFile = flag.String("c", defaultConfigFileName, "path to configuration file")
 	apiKey     = flag.String("k", "", "admin API key for the Kaginawa Server")
 	server     = flag.String("s", "", "hostname of the Kaginawa Server")
+	procFile   = flag.String("f", "", "path to procedure (line-separated list of commands) file")
 	listener   = flag.Bool("l", false, "listen local port for TCP transfer")
 	v          = flag.Bool("v", false, "print version")
+	procedure  []string
 )
 
 func main() {
@@ -28,7 +32,7 @@ func main() {
 		fmt.Printf("kssh %s, compiled by %s\n", ver, runtime.Version())
 		os.Exit(0)
 	}
-	if flag.NArg() != 1 {
+	if flag.NArg() == 0 {
 		flag.Usage()
 		os.Exit(2)
 	}
@@ -37,6 +41,9 @@ func main() {
 		if defaultDir, err := os.UserConfigDir(); err == nil {
 			*configFile = filepath.Join(defaultDir, *configFile)
 		}
+	}
+	if flag.NArg() > 1 {
+		procedure = append(procedure, strings.Join(flag.Args()[1:], " "))
 	}
 	var config config
 
@@ -50,7 +57,7 @@ func main() {
 	} else if _, err := os.Stat(*configFile); err == nil {
 		c, err := loadConfig(*configFile)
 		if err != nil {
-			fmt.Printf("failed to load %s: %v\n", *configFile, err)
+			fatalf("%v", err)
 		}
 		config = c
 	} else {
@@ -71,6 +78,23 @@ func main() {
 			panic(err)
 		}
 		username = u.Name
+	}
+
+	if len(*procFile) > 0 {
+		content, err := os.ReadFile(*procFile)
+		if err != nil {
+			fatalf("failed to load %s: %v", *procFile, err.Error())
+		}
+		s := bufio.NewScanner(bytes.NewReader(content))
+		for s.Scan() {
+			t := s.Text()
+			if len(t) > 0 {
+				procedure = append(procedure, t)
+			}
+		}
+		if len(procedure) == 0 {
+			fatalf("procedure is empty: %s", *procFile)
+		}
 	}
 
 	start(config, target, username, defaultPassword)
@@ -175,7 +199,17 @@ func start(config config, target string, username, defaultPassword string) {
 	}
 	if *listener {
 		listen(tunnel, report.SSHRemotePort)
-	} else {
-		connect(tunnel, username, defaultPassword, report.SSHRemotePort)
+		return
 	}
+	s := connect(tunnel, username, defaultPassword, report.SSHRemotePort)
+	defer safeClose(s, "session")
+	if len(procedure) > 0 {
+		out, err := execCommand(s, strings.Join(procedure, " && "))
+		if err != nil {
+			fatalf("failed to execute command: %v", err)
+		}
+		fmt.Println(out)
+		return
+	}
+	openTerminal(s)
 }
