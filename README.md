@@ -55,6 +55,7 @@ kssh [<USER>@]<CUSTOM_ID|MAC> <COMMAND>
 - `-c <CONFIG>` - specify config file path
 - `-s <SERVER>` - specify [kaginawa server](https://github.com/kaginawa/kaginawa-server) address
 - `-f <PROCESURE_FILE>` - specify procedure (line-separated list of commands) file
+- `-m <MINUTES>` - specify freshness threshold by minutes (default = 15)
 - `-l` - listen a local port for transferring non-SSH TCP connections trough the SSH tunnel
 
 ## Configuration
