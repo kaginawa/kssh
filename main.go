@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/kaginawa/kaginawa-sdk-go"
 )
@@ -21,6 +22,7 @@ var (
 	apiKey     = flag.String("k", "", "admin API key for the Kaginawa Server")
 	server     = flag.String("s", "", "hostname of the Kaginawa Server")
 	procFile   = flag.String("f", "", "path to procedure (line-separated list of commands) file")
+	freshness  = flag.Int("m", 15, "report freshness threshold by minutes")
 	listener   = flag.Bool("l", false, "listen local port for TCP transfer")
 	v          = flag.Bool("v", false, "print version")
 	procedure  []string
@@ -185,7 +187,16 @@ func start(config config, target string, username, defaultPassword string) {
 		if len(reports) == 0 {
 			fatalf("target not found: %s", target)
 		}
-		report = selectTarget(reports)
+		var aliveReports []kaginawa.Report
+		for i, r := range reports {
+			if time.Now().Sub(time.Unix(r.ServerTime, 0)) < time.Duration(*freshness)*time.Minute {
+				aliveReports = append(aliveReports, reports[i])
+			}
+		}
+		if len(aliveReports) == 0 {
+			fatalf("target timestamp is out of date")
+		}
+		report = selectTarget(aliveReports)
 	}
 	if report.SSHRemotePort == 0 {
 		fatalf("ssh not connected.")
