@@ -10,7 +10,11 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-const eofRetries = 3
+const (
+	eofRetries           = 3
+	defaultConsoleWidth  = 80
+	defaultConsoleHeight = 24
+)
 
 func connect(tunnel *kaginawa.SSHServer, user, defaultPassword string, port int) *ssh.Session {
 	tunnelConfig, err := createSSHConfig(tunnel.User, tunnel.Key, tunnel.Password)
@@ -115,7 +119,7 @@ func openTerminal(session *ssh.Session) {
 	}()
 	w, h, err := terminal.GetSize(fd)
 	if err != nil {
-		fatalf("%v", err)
+		w, h = defaultConsoleWidth, defaultConsoleHeight
 	}
 	modes := ssh.TerminalModes{
 		ssh.ECHO:          1,
