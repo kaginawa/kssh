@@ -2,7 +2,6 @@ kssh
 ====
 
 [![Actions Status](https://github.com/kaginawa/kssh/workflows/Go/badge.svg)](https://github.com/kaginawa/kssh/actions)
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kaginawa_kssh&metric=alert_status)](https://sonarcloud.io/dashboard?id=kaginawa_kssh)
 [![Go Report Card](https://goreportcard.com/badge/github.com/kaginawa/kssh)](https://goreportcard.com/report/github.com/kaginawa/kssh)
 
 [Kaginawa](https://github.com/kaginawa/kaginawa)-powered SSH client.
